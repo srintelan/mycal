@@ -360,6 +360,20 @@ function resetForm() {
     document.getElementById('imageContainer').style.display = "none";
     // RESET GAMBAR PADA FORM RESET SELESAI
 }
+
+// Hamburger menu functionality
+    const menuBtn = document.getElementById('menuBtn');
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('overlay');
+
+    function toggleSidebar() {
+        menuBtn.classList.toggle('open');
+        sidebar.classList.toggle('active');
+        overlay.classList.toggle('active');
+    }
+
+    menuBtn.addEventListener('click', toggleSidebar);
+    overlay.addEventListener('click', toggleSidebar);
 </script>
 
 
