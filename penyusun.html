@@ -374,6 +374,12 @@ function resetForm() {
 
     menuBtn.addEventListener('click', toggleSidebar);
     overlay.addEventListener('click', toggleSidebar);
+
+    // Logout button handler
+    document.getElementById('logoutBtn').addEventListener('click', async (e) => {
+        e.preventDefault();
+        await logoutUser();
+    });
 </script>
 
 
