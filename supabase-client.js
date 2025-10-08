@@ -1,10 +1,11 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
-// Variabel untuk menyimpan instance supabase
-let supabase = null;
+// SINGLETON PATTERN - hanya satu instance supabase
+let supabaseInstance = null;
 let configPromise = null;
+let isInitializing = false;
 
-// Fungsi untuk load config dari API
+// Fungsi untuk load config dari API (hanya sekali)
 async function loadConfig() {
     if (configPromise) return configPromise;
     
@@ -21,24 +22,44 @@ async function loadConfig() {
         })
         .catch(err => {
             console.error('Error loading config:', err);
-            configPromise = null;
+            configPromise = null; // Reset on error so it can retry
             throw err;
         });
     
     return configPromise;
 }
 
-// Fungsi untuk mendapatkan supabase client
-async function getSupabase() {
-    if (supabase) return supabase;
-    
-    const config = await loadConfig();
-    supabase = createClient(config.supabaseUrl, config.supabaseKey);
-    return supabase;
-}
+// Fungsi untuk mendapatkan supabase client (SINGLETON)
+export async function getSupabase() {
+    // Jika sudah ada instance, return langsung
+    if (supabaseInstance) {
+        return supabaseInstance;
+    }
 
-// Export supabase sebagai Promise untuk backward compatibility
-export { getSupabase };
+    // Jika sedang proses inisialisasi, tunggu
+    if (isInitializing) {
+        // Tunggu sampai instance tersedia
+        while (isInitializing) {
+            await new Promise(resolve => setTimeout(resolve, 50));
+        }
+        return supabaseInstance;
+    }
+
+    try {
+        isInitializing = true;
+        const config = await loadConfig();
+        
+        // Double check - mungkin instance sudah dibuat saat waiting
+        if (!supabaseInstance) {
+            supabaseInstance = createClient(config.supabaseUrl, config.supabaseKey);
+            console.log('✅ Supabase client initialized (singleton)');
+        }
+        
+        return supabaseInstance;
+    } finally {
+        isInitializing = false;
+    }
+}
 
 let onlineUsersSubscription = null;
 let activityLogsSubscription = null;
@@ -449,46 +470,81 @@ export async function testActivityLogsAccess() {
     }
 }
 
+// Realtime Subscriptions dengan channel management yang lebih baik
 export async function subscribeToOnlineUsers(callback) {
-    const client = await getSupabase();
-    onlineUsersSubscription = client
-        .channel('online_users_changes')
-        .on('postgres_changes', 
-            { event: '*', schema: 'public', table: 'online_users' },
-            () => {
-                callback();
-            }
-        )
-        .subscribe();
+    try {
+        const client = await getSupabase();
+        
+        // Unsubscribe dari channel lama jika ada
+        if (onlineUsersSubscription) {
+            await client.removeChannel(onlineUsersSubscription);
+        }
+        
+        onlineUsersSubscription = client
+            .channel('online_users_changes')
+            .on('postgres_changes', 
+                { event: '*', schema: 'public', table: 'online_users' },
+                () => {
+                    callback();
+                }
+            )
+            .subscribe();
+            
+        debugLog('✅ Subscribed to online_users changes');
+    } catch (err) {
+        console.error('Error subscribing to online users:', err);
+    }
 }
 
 export async function subscribeToActivityLogs(callback) {
-    const client = await getSupabase();
-    activityLogsSubscription = client
-        .channel('activity_logs_changes')
-        .on('postgres_changes',
-            { event: 'INSERT', schema: 'public', table: 'activity_logs' },
-            (payload) => {
-                debugLog('📥 New activity log received via realtime:', payload);
-                callback(payload.new);
-            }
-        )
-        .subscribe();
+    try {
+        const client = await getSupabase();
+        
+        // Unsubscribe dari channel lama jika ada
+        if (activityLogsSubscription) {
+            await client.removeChannel(activityLogsSubscription);
+        }
+        
+        activityLogsSubscription = client
+            .channel('activity_logs_changes')
+            .on('postgres_changes',
+                { event: 'INSERT', schema: 'public', table: 'activity_logs' },
+                (payload) => {
+                    debugLog('📥 New activity log received via realtime:', payload);
+                    callback(payload.new);
+                }
+            )
+            .subscribe();
+            
+        debugLog('✅ Subscribed to activity_logs changes');
+    } catch (err) {
+        console.error('Error subscribing to activity logs:', err);
+    }
 }
 
 export async function unsubscribeFromOnlineUsers() {
     if (onlineUsersSubscription) {
-        const client = await getSupabase();
-        client.removeChannel(onlineUsersSubscription);
-        onlineUsersSubscription = null;
+        try {
+            const client = await getSupabase();
+            await client.removeChannel(onlineUsersSubscription);
+            onlineUsersSubscription = null;
+            debugLog('✅ Unsubscribed from online_users changes');
+        } catch (err) {
+            console.error('Error unsubscribing from online users:', err);
+        }
     }
 }
 
 export async function unsubscribeFromActivityLogs() {
     if (activityLogsSubscription) {
-        const client = await getSupabase();
-        client.removeChannel(activityLogsSubscription);
-        activityLogsSubscription = null;
+        try {
+            const client = await getSupabase();
+            await client.removeChannel(activityLogsSubscription);
+            activityLogsSubscription = null;
+            debugLog('✅ Unsubscribed from activity_logs changes');
+        } catch (err) {
+            console.error('Error unsubscribing from activity logs:', err);
+        }
     }
 }
 
@@ -510,6 +566,7 @@ export function requireAuth() {
     }
 }
 
+// Visibility change handler
 document.addEventListener('visibilitychange', async () => {
     if (document.hidden) {
         const userId = localStorage.getItem('userId');
@@ -521,6 +578,7 @@ document.addEventListener('visibilitychange', async () => {
     }
 });
 
+// Beforeunload handler
 window.addEventListener('beforeunload', async () => {
     const userId = localStorage.getItem('userId');
     if (userId) {
