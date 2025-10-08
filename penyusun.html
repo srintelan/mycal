@@ -91,22 +91,19 @@
             margin: 10px 20px;
         }
         
-        /* --- CSS LAMA MAIN-CONTENT DIBUANG --- */
         .main-content {
             padding: 20px;
-            padding-top: 70px; /* Pertahankan padding untuk menghindari tertutup menu */
+            padding-top: 70px;
             margin-left: 0;
             transition: margin-left 0.3s ease-in-out;
             
-            /* --- CSS TAMBAHAN UNTUK MEMPOSISIKAN CONTENT KE TENGAH SECARA UMUM --- */
-            /* Ini akan memposisikan 'container' ke tengah halaman di dalam main-content */
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh; /* Memastikan main-content setidaknya setinggi viewport */
-            box-sizing: border-box; /* Memastikan padding tidak menambah total tinggi */
-            padding-bottom: 20px; /* Agar ada ruang di bawah container */
-            padding-top: 70px; /* Jarak dari menu */
+            min-height: 100vh;
+            box-sizing: border-box;
+            padding-bottom: 20px;
+            padding-top: 70px;
         }
         
         .overlay {
@@ -134,7 +131,9 @@
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
             width: 350px;
-            /* margin: auto; <--- Dihapus karena sudah diposisikan oleh main-content flex */
+            /* --- PERBAIKAN PENTING UNTUK MOBILE/RESPONSIF --- */
+            max-width: calc(100% - 40px); /* Memastikan lebar maksimal tidak melebihi viewport dikurangi padding */
+            /* ------------------------------------------------ */
         }
         h2 { text-align: center; margin-bottom: 20px; }
         select, input, button { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
@@ -165,22 +164,6 @@
             height: 100px;
             object-fit: contain;
         }
-
-        /* --- MENGHAPUS DUPLIKAT BODY STYLE DARI CSS INLINE --- */
-        /* Hapus semua style di bawah ini karena duplikasi dengan style di atas */
-        /*
-        .main-content style:
-        body {
-            font-family: Arial, sans-serif;
-            background: #f4f4f4;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-size:cover;
-        }
-        */
-
     </style>
 </head>
 <body>
@@ -204,6 +187,7 @@
     <div class="overlay" id="overlay"></div>
 
     <main class="main-content" id="mainContent">
+        
         <div class="container">
             <h2>Kalkulator Material Penyusun</h2>
 
