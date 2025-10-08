@@ -360,8 +360,51 @@ function resetForm() {
     document.getElementById('imageContainer').style.display = "none";
     // RESET GAMBAR PADA FORM RESET SELESAI
 }
+</script>
+ 
 
-// Hamburger menu functionality
+    <script type="module">
+        import { requireAuth, logoutUser, updateUserActivity } from './supabase-client.js';
+
+        requireAuth();
+
+        document.getElementById('logoutBtn').addEventListener('click', async (e) => {
+            e.preventDefault();
+            await logoutUser();
+        });
+
+        setInterval(updateUserActivity, 60000);
+    </script>
+    <script type="module">
+    import { requireAuth, logoutUser, updateUserActivity, trackNavigation } from './supabase-client.js';
+
+    requireAuth();
+
+    // Track page access - ganti 'PAGE_NAME' dengan nama halaman yang sesuai
+    // Untuk penyusun.html: 'Penghitung Material Penyusun'
+    // Untuk waktu.html: 'Penghitung Waktu Produksi'
+    // Untuk barang.html: 'Penghitung Barang EA'
+    // Untuk box.html: 'Penghitung Box EA'
+    trackNavigation('Penghitung Material Penyusun'); // <-- GANTI INI
+
+    // Logout button handler
+    document.getElementById('logoutBtn').addEventListener('click', async (e) => {
+        e.preventDefault();
+        await logoutUser();
+    });
+
+    // Track sidebar navigation clicks
+    document.querySelectorAll('.sidebar a[data-menu]').forEach(link => {
+        link.addEventListener('click', function() {
+            const menuName = this.getAttribute('data-menu');
+            trackNavigation(menuName);
+        });
+    });
+
+    // Update user activity every minute
+    setInterval(updateUserActivity, 60000);
+
+    // Hamburger menu functionality
     const menuBtn = document.getElementById('menuBtn');
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('overlay');
@@ -374,14 +417,7 @@ function resetForm() {
 
     menuBtn.addEventListener('click', toggleSidebar);
     overlay.addEventListener('click', toggleSidebar);
-
-    // Logout button handler
-    document.getElementById('logoutBtn').addEventListener('click', async (e) => {
-        e.preventDefault();
-        await logoutUser();
-    });
 </script>
-
 
         
 </main>
