@@ -154,6 +154,25 @@
         .btn-primary:hover { background: #0056b3; }
         .btn-secondary { background: #6c757d; color: white; }
         .btn-secondary:hover { background: #5a6268; }
+
+        /* --- CSS BARU UNTUK GAMBAR --- */
+        .image-container {
+            margin-bottom: 15px;
+            overflow-x: auto; /* Memungkinkan scroll horizontal jika gambar terlalu lebar */
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 5px;
+            display: none; /* Sembunyikan secara default */
+        }
+        .image-container img {
+            display: block;
+            width: auto; /* Biarkan lebar mengikuti ukuran asli gambar */
+            max-width: none; /* Izinkan gambar melebihi lebar container untuk di-scroll */
+            height: 100px; /* Atur tinggi tetap agar gambar tidak terlalu besar/kecil */
+            object-fit: contain; /* Memastikan seluruh gambar terlihat tanpa distorsi */
+        }
+        /* ----------------------------- */
+
     </style>
 </head>
 <body>
@@ -184,15 +203,14 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        height: 100vh;
+        /* Hapus atau ubah tinggi 100vh agar tidak bentrok dengan main-content padding */
+        /* height: 100vh; */
         background-size:cover;
     }
     .container {
-        background: #fff;
-        padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        width: auto;
+        /* Hapus margin auto di sini karena sudah ada di style atas */
+        /* margin: auto; */
+        width: 350px; /* Pertahankan lebar agar kalkulator terlihat baik */
     }
     h2 {
         text-align: center;
@@ -270,9 +288,6 @@
         background: #5a6268;
     }
 </style>
-</head>
-<body>
-
 <div class="container">
     <h2>Kalkulator Material Penyusun</h2>
 
@@ -281,6 +296,9 @@
         <option value="">-- Pilih Material --</option>
     </select>
 
+    <div class="image-container" id="imageContainer">
+        <img id="materialImage" src="" alt="Gambar Material" style="display:none;">
+    </div>
     <div id="info" class="info-box" style="display:none;"></div>
 
     <label>Jumlah Produksi</label>
@@ -299,7 +317,7 @@
 <script>
 let data = null;
 
-fetch('/updatedata.json')
+fetch('/dataimg.json')
     .then(response => response.json())
     .then(json => {
         data = json;
@@ -314,9 +332,25 @@ fetch('/updatedata.json')
     .catch(err => console.error('Gagal memuat JSON:', err));
 
 document.getElementById('material').addEventListener('change', () => {
-    const selected = data?.Sheet1[document.getElementById('material').value];
+    const selectedIndex = document.getElementById('material').value;
+    const selected = data?.Sheet1[selectedIndex];
     const infoDiv = document.getElementById('info');
+    const imageContainer = document.getElementById('imageContainer');
+    const materialImage = document.getElementById('materialImage');
+
     if (selected) {
+        // --- LOGIKA MENAMPILKAN GAMBAR BARU ---
+        if (selected["IMG"]) {
+            materialImage.src = selected["IMG"];
+            materialImage.style.display = 'block';
+            imageContainer.style.display = 'block';
+        } else {
+            materialImage.src = '';
+            materialImage.style.display = 'none';
+            imageContainer.style.display = 'none';
+        }
+        // --- LOGIKA MENAMPILKAN GAMBAR SELESAI ---
+
         infoDiv.style.display = 'block';
         let html = `
             Material: ${selected["NAME MATERIAL"]}<br>
@@ -343,6 +377,12 @@ document.getElementById('material').addEventListener('change', () => {
 
         infoDiv.innerHTML = html;
     } else {
+        // --- RESET GAMBAR ---
+        materialImage.src = '';
+        materialImage.style.display = 'none';
+        imageContainer.style.display = 'none';
+        // --- RESET GAMBAR SELESAI ---
+
         infoDiv.style.display = 'none';
         infoDiv.innerHTML = '';
     }
@@ -365,6 +405,7 @@ function hitung() {
         return;
     }
 
+    // Mengganti koma dengan titik untuk parsing float
     const inkCount = selected["INK COUNT"] !== "NO" ? parseFloat(selected["INK COUNT"].replace(',', '.')) : 0;
     const thinnerCount = selected["THINER COUNT"] !== "NO" ? parseFloat(selected["THINER COUNT"].replace(',', '.')) : 0;
 
@@ -405,9 +446,14 @@ function resetForm() {
     document.getElementById('hasil').innerHTML = "";
     document.getElementById('info').style.display = "none";
     document.getElementById('info').innerHTML = "";
+    // --- RESET GAMBAR PADA FORM RESET ---
+    document.getElementById('materialImage').src = "";
+    document.getElementById('materialImage').style.display = "none";
+    document.getElementById('imageContainer').style.display = "none";
+    // --- RESET GAMBAR PADA FORM RESET SELESAI ---
 }
 </script>
-            
+        
 
     <script type="module">
         import { requireAuth, logoutUser, updateUserActivity } from './supabase-client.js';
@@ -465,5 +511,6 @@ function resetForm() {
     overlay.addEventListener('click', toggleSidebar);
 </script>
 
+</main>
 </body>
 </html>
