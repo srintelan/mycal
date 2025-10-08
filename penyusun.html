@@ -269,6 +269,25 @@
     .btn-secondary:hover {
         background: #5a6268;
     }
+
+
+    .img-container {
+    width: 100%;
+    overflow-x: auto;       /* scroll horizontal jika gambar panjang */
+    margin-top: 10px;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.img-container img {
+    max-height: 220px;      /* agar tinggi tidak terlalu besar */
+    height: auto;
+    width: auto;
+    max-width: none;
+    display: inline-block;
+    border-radius: 8px;
+}
+
 </style>
 </head>
 <body>
@@ -280,6 +299,11 @@
     <select id="material">
         <option value="">-- Pilih Material --</option>
     </select>
+
+
+<div id="imgContainer" class="img-container" style="display:none;"></div>
+
+
 
     <div id="info" class="info-box" style="display:none;"></div>
 
@@ -317,6 +341,18 @@ document.getElementById('material').addEventListener('change', () => {
     const selected = data?.Sheet1[document.getElementById('material').value];
     const infoDiv = document.getElementById('info');
     if (selected) {
+
+        // tampilkan gambar jika ada
+        if (selected["IMG"] && selected["IMG"] !== "NO") {
+            imgContainer.style.display = "block";
+            imgContainer.innerHTML = `<img src="${selected["IMG"]}" alt="Gambar Material">`;
+        } else {
+            imgContainer.style.display = "none";
+            imgContainer.innerHTML = "";
+        }
+
+
+         // tampilkan info
         infoDiv.style.display = 'block';
         let html = `
             Material: ${selected["NAME MATERIAL"]}<br>
